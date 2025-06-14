@@ -453,16 +453,32 @@ static void set_matrix_row(uint row) {
 #else
 
 // shift register address
-static void set_matrix_row(uint row) {
-    // we assume the row advances by 1 with each call to this function
-    #ifdef VERTICAL_SCAN
-    #error vertical scan needs to advance by multiple rows here
-    #endif
+static uint current_shift_row = 1;
 
-    tiny_wait(8);
-    gpio_set_bits((1<<ADDR_CLK) | ((row==0)<<ADDR_DAT));
-    tiny_wait(6);
+static inline void address_shift_left(const uint lsb) {
+    tiny_wait(CLOCK_WAITS * 2);
+    gpio_set_bits((1<<ADDR_CLK) | (lsb<<ADDR_DAT));
+    tiny_wait(CLOCK_WAITS * 2);
     gpio_clear_bits((1<<ADDR_CLK) | (1<<ADDR_DAT));
+}
+
+static void set_matrix_row(uint row) {
+    if (row < current_shift_row) {
+        int leading_zeros = PANEL_FIELD_HEIGHT - row - 1;
+        int flush = leading_zeros - current_shift_row;
+
+        for (int i = 0; i < flush; ++i) {
+            address_shift_left(0);
+        }
+        address_shift_left(1);
+
+        current_shift_row = 0;
+    }
+
+    for (; current_shift_row < row; ++current_shift_row) {
+        address_shift_left(0);
+    }
+
 }
 
 #endif
@@ -541,7 +557,7 @@ int main(int argc, char** argv) {
         for (int b = 0; b < bpc; ++b) {
             unblank[(b+1)%bpc] = gamma[b];
         }
-        
+
 #ifdef VERTICAL_SCAN
         for (uint ci = 0; ci < count_of(colscatter); ci++) {
             uint line = ci;
