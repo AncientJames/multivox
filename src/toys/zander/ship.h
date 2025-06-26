@@ -6,6 +6,7 @@
 
 extern struct vec3 ship_position;
 
+void ship_init(void);
 void ship_update(float dt);
 void ship_draw(pixel_t* volume);
 

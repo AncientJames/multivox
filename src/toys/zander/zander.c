@@ -40,10 +40,21 @@ void world_from_voxel(float* position, const int32_t* voxel) {
     position[1] = ((voxel[1] - (VOXELS_Y / 2)) / world_scale) + world_position.y;
     position[2] = ((voxel[2]                 ) / world_scale) + world_position.z;
 }
-void main_init(void) {
-    timer_init();
+
+float rand_range(float inf, float sup) {
+    return ((float)rand() / (float)(RAND_MAX)) * (sup - inf) + inf;
+}
+
+void zander_reset(void) {
     objects_init();
     terrain_init();
+    particles_init();
+    ship_init();
+}
+
+void main_init(void) {
+    timer_init();
+    zander_reset();
 }
 
 void main_update(float dt) {    

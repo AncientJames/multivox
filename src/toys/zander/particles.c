@@ -23,10 +23,6 @@ size_t particle_count = 0;
 static const float tick_scale = 1.0f / 12.0f;
 static const float velocity_scale = 8.0f / ((float)0x01000000);
 
-float rand_range(float inf, float sup) {
-    return ((float)rand() / (float)(RAND_MAX)) * (sup - inf) + inf;
-}
-
 void randomise_velocity(float* velocity, float amount) {
     float direction[VEC3_SIZE];
     do {
@@ -37,6 +33,10 @@ void randomise_velocity(float* velocity, float amount) {
 
     vec3_multiply_f(direction, direction, amount);
     vec3_add(velocity, velocity, direction);
+}
+
+void particles_init(void) {
+    particle_count = 0;
 }
 
 void particles_add(const float* position, const float* velocity, particle_type_t type) {

@@ -29,6 +29,7 @@ void particles_add(const float* position, const float* velocity, particle_type_t
 void particles_add_splash(const float* position, bool big_splash);
 void particles_add_explosion(const float* position, int clusters);
 
+void particles_init(void);
 void particles_update(float dt);
 void particles_draw(pixel_t* volume);
 

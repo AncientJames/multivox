@@ -32,5 +32,9 @@ static inline void voxel_from_world(int32_t* voxel, const float* position) {
 
 void world_from_voxel(float* position, const int32_t* voxel);
 
+float rand_range(float inf, float sup);
+
+void zander_reset(void);
+
 
 #endif

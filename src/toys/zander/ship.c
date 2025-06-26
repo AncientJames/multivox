@@ -1,5 +1,6 @@
 #include "ship.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 
 #include "mathc.h"
@@ -77,7 +78,89 @@ float angle_diff(float to, float from) {
     return diff;
 }
 
+
+static bool autopilot = false;
+static float autopilot_reset = 30.0f;
+static float autopilot_heading = 0.0f;
+
+static vec2_t control_stick;
+static float control_thrust;
+static bool control_fire;
+
+bool autopilot_update(float dt) {
+    autopilot_reset -= dt;
+
+    bool idle = fabsf(input_get_axis(0, AXIS_LS_X)) <= 0.01f
+             && fabsf(input_get_axis(0, AXIS_LS_Y)) <= 0.01f
+             && fabsf(input_get_axis(0, AXIS_RT)) <= 0.01f
+             && !input_get_button(0, BUTTON_RB, BUTTON_HELD);
+
+    if (!idle) {
+        autopilot_reset = 30.0f;
+        autopilot = false;
+        return false;
+    }
+
+    if (!autopilot) {
+        if (autopilot_reset > 0) {
+            return false;
+        }
+
+        autopilot = true;
+
+        zander_reset();
+        vec2_zero(control_stick.v);
+        autopilot_heading = 2.0f;
+        autopilot_reset = 300.0f;
+    }
+
+    if (autopilot_reset < 0.0f) {
+        autopilot = false;
+
+        vec2_zero(control_stick.v);
+        control_thrust = 0.0f;
+        control_fire = false;
+
+        autopilot_reset = 2.0f;
+
+        return true;
+    }
+
+    autopilot_heading -= dt;
+    if (autopilot_heading <= 0) {
+        control_stick.x = rand_range(-0.5f, 0.5f);
+        control_stick.y = rand_range(-0.5f, 0.5f);
+
+        autopilot_heading = rand_range(1.0f, 5.0f);
+    }
+
+    if (intersection.detected) {
+        autopilot_reset -= 30.0f;
+        vec2_zero(control_stick.v);
+        autopilot_heading = 2.0f;
+    }
+
+    control_thrust = 0.35f;
+
+    control_fire = autopilot_heading < 0.5f;
+
+    return true;
+}
+
+void ship_init(void) {
+    vec3_assign(ship_position.v, (float[3]){3.5f, 3.5f, 2.0f + ship_undercarriage});
+    vec3_zero(ship_rotation.v);
+    vec3_zero(ship_velocity.v);
+}
+
 void ship_update(float dt) {
+
+    if (!autopilot_update(dt)) {
+        control_stick.x = input_get_axis(0, AXIS_LS_X);
+        control_stick.y = input_get_axis(0, AXIS_LS_Y);
+        control_thrust = input_get_axis(0, AXIS_RT);
+        control_fire = input_get_button(0, BUTTON_RB, BUTTON_HELD);
+    }
 
     debug_collision = intersection.detected;
 
@@ -90,10 +173,6 @@ void ship_update(float dt) {
         }
         intersection = (intersection_t){false, ~0, ~0};
     }
-
-    vec2_t control_stick;
-    control_stick.x = input_get_axis(0, AXIS_LS_X);
-    control_stick.y = input_get_axis(0, AXIS_LS_Y);
 
     float control_magnitude = vec2_length(control_stick.v);
     float control_direction = atan2f(-control_stick.y, control_stick.x);
@@ -112,7 +191,6 @@ void ship_update(float dt) {
     mat4_identity(matrix);
     mat4_apply_rotation(matrix, ship_rotation.v);
 
-    float control_thrust = input_get_axis(0, AXIS_RT);
     if (control_thrust > 0.0f) {
         float engine[VEC3_SIZE];
         vec3_transform(engine, ship_engine_vector, matrix);
@@ -151,7 +229,6 @@ void ship_update(float dt) {
         ship_velocity.z = fabsf(ship_velocity.z);
     }
 
-    bool control_fire = input_get_button(0, BUTTON_RB, BUTTON_HELD);
     if (control_fire) {
         bullet_time += dt;
 
