@@ -469,7 +469,7 @@ int main(int argc, char** argv) {
         int tproc = temperature_cpu;
         if (++perf > 60) {
             perf = 0;
-            printf("%u fps   %u rpm    %d.%03d° (%d.%03d°)\n", 1000000 / (uint)voxel_buffer->microseconds_per_frame, (uint)voxel_buffer->revolutions_per_minute, tbase / 1000, tbase % 1000, tproc / 1000, tproc % 1000);
+            printf("%u fps   %u rpm    %d.%03d° (%d.%03d°)\n", 1000000 / max(1, (uint)voxel_buffer->microseconds_per_frame), (uint)voxel_buffer->revolutions_per_minute, tbase / 1000, tbase % 1000, tproc / 1000, tproc % 1000);
             //printf("x:%g y:%g z:%g s:%g p:%g r:%g y:%g\n", model_position[0], model_position[1], model_position[2], model_scale, model_rotation[0], model_rotation[1], model_rotation[2]);
         }
 #endif
