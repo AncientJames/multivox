@@ -39,8 +39,7 @@ static uint16_t bit_reverse(uint16_t n) {
 }
 
 int32_t zsin(int32_t v) {
-    // I'm getting something wrong here - I think it should be v >> 22, but this is visually closer in horizontal scale
-    return zsinTable[(v >> 21) & 1023];
+    return zsinTable[(v >> 22) & 1023];
 }
 
 static int32_t GetLandscapeAltitude(int32_t x, int32_t z) {
@@ -49,7 +48,7 @@ static int32_t GetLandscapeAltitude(int32_t x, int32_t z) {
      r = zsin(     x -  2 * z) / 128;
     r += zsin( 4 * x +  3 * z) / 128;
     r += zsin( 3 * z -  5 * x) / 128;
-    r += zsin( 3 * x +  3 * z) / 128;
+    r += zsin( 7 * x +  5 * z) / 128;
     r += zsin( 5 * x + 11 * z) / 256;
     r += zsin(10 * x +  7 * z) / 256;
 

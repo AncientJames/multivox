@@ -128,8 +128,8 @@ bool autopilot_update(float dt) {
 
     autopilot_heading -= dt;
     if (autopilot_heading <= 0) {
-        control_stick.x = rand_range(-0.5f, 0.5f);
-        control_stick.y = rand_range(-0.5f, 0.5f);
+        control_stick.x = rand_range(-0.35f, 0.35f);
+        control_stick.y = rand_range(-0.35f, 0.35f);
 
         autopilot_heading = rand_range(1.0f, 5.0f);
     }
@@ -191,12 +191,14 @@ void ship_update(float dt) {
     mat4_identity(matrix);
     mat4_apply_rotation(matrix, ship_rotation.v);
 
+    float ground = terrain_get_altitude(ship_position.x, ship_position.y);
+
     if (control_thrust > 0.0f) {
         float engine[VEC3_SIZE];
         vec3_transform(engine, ship_engine_vector, matrix);
                 
         float thrust[VEC3_SIZE];
-        float max_thrust = ship_thrust_max / max(1.0f, ship_position.z * 0.5f);
+        float max_thrust = ship_thrust_max / max(1.0f, (ship_position.z - ground * 0.5f) * 0.5f);
         vec3_multiply_f(thrust, engine, -control_thrust * max_thrust * dt);
 
         vec3_add(ship_velocity.v, ship_velocity.v, thrust);
@@ -219,8 +221,6 @@ void ship_update(float dt) {
     float dpos[VEC3_SIZE];
     vec3_multiply_f(dpos, ship_velocity.v, dt);
     vec3_add(ship_position.v, ship_position.v, dpos);
-
-    float ground = terrain_get_altitude(ship_position.x, ship_position.y);
 
     if (ship_position.z < ground + ship_undercarriage) {
         ship_position.z = ground + ship_undercarriage;
