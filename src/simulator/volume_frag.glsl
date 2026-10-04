@@ -2,9 +2,15 @@
 
 precision mediump int;
 precision mediump float;
-precision mediump isampler3D;
 
+#ifdef VOXEL_565
+precision mediump sampler3D;
+uniform sampler3D u_volume;
+#else
+precision mediump isampler3D;
 uniform isampler3D u_volume;
+#endif
+
 uniform int u_bpcmask;
 uniform int u_dotlock;
 
@@ -32,8 +38,13 @@ void main() {
         texcoord.yz = (texcoord.yz - vec2(0.5, 0.5)) * ((floor(v_dotcoord.x) + 0.5) / v_dotcoord.x) + vec2(0.5, 0.5);
     }
 #endif
+
+#ifdef VOXEL_565
+    vec3 colour = texture(u_volume, texcoord).rgb;
+#else
     int pix = texture(u_volume, texcoord).r & u_bpcmask;
     vec3 colour = vec3(float(pix & 0xe0), float(pix & 0x1c), float(pix & 0x03)) * v_bpcscale;
+#endif
 
     ql_FragColor.rgb = colour * lum;
     ql_FragColor.a = 1.0;

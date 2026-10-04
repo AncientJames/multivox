@@ -22,7 +22,6 @@
 #include "volume_vert_glsl.h"
 #include "volume_frag_glsl.h"
 
-_Static_assert(sizeof(pixel_t)==1, "simulator only supports RGB332");
 _Static_assert(VOXEL_Z_STRIDE==1, "simulator assumes z stride is 1");
 
 
@@ -239,7 +238,11 @@ GLuint compile_shader(GLenum type, const char* source) {
         return 0;
     }
 
+#ifdef HIGH_COLOUR
+    glShaderSource(shader, 2, (const GLchar*[]){"#version 310 es\n#define VOXEL_565\n//", source}, NULL);
+#else
     glShaderSource(shader, 1, &source, NULL);
+#endif
     glCompileShader(shader);
 
     GLint compiled;
@@ -306,8 +309,11 @@ static void init_texture(void) {
     //glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     //glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     //glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-
+#ifdef HIGH_COLOUR
+    glTexImage3D(GL_TEXTURE_3D, 0, GL_RGB565, VOXELS_Z, VOXELS_X, VOXELS_Y, 0, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, voxel_buffer->volume[voxel_buffer->page]);
+#else
     glTexImage3D(GL_TEXTURE_3D, 0, GL_R8UI, VOXELS_Z, VOXELS_X, VOXELS_Y, 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, voxel_buffer->volume[voxel_buffer->page]);
+#endif
 }
 
 static size_t create_mesh_radial() {
@@ -513,7 +519,11 @@ void sim_draw(void) {
 
     for (int y = 0; y < VOXELS_Y; ++y) {
         // splitting up the texture upload causes less flicker with simultaneous page flips
+#ifdef HIGH_COLOUR
+        glTexSubImage3D(GL_TEXTURE_3D, 0, 0, 0, y, VOXELS_Z, VOXELS_X, 1, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, &voxel_buffer->volume[voxel_buffer->page][VOXEL_INDEX(0,y,0)]);
+#else
         glTexSubImage3D(GL_TEXTURE_3D, 0, 0, 0, y, VOXELS_Z, VOXELS_X, 1, GL_RED_INTEGER, GL_UNSIGNED_BYTE, &voxel_buffer->volume[voxel_buffer->page][VOXEL_INDEX(0,y,0)]);
+#endif
     }
 
     glUseProgram(volume.program);
